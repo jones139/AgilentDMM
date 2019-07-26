@@ -17,6 +17,7 @@ Dependencies
 Usage Example
 =============
 dvm1 = AgilentDMM('dev/ttyUSB0')
+
 vArr, tsamp = dvm1.readVoltsMultiple(nSamp=10)
 
 The above connects to and configures the meter and reads 10 measurements
