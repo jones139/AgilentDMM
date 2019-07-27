@@ -107,6 +107,9 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fname',  dest='fname',
                         default='DMMLogger.csv',
                         help='Output Filename')
+    parser.add_argument('--debug', '-d', default=False,
+                        action='store_true', dest='debug',
+                        help='Number of records to record')
 
     args = parser.parse_args()
     args = vars(args)
@@ -114,5 +117,5 @@ if __name__ == "__main__":
     t = Test(args['fname'],
              nRec = args['nRec'],
              nSamp = args['nSamp'],
-             debug=False)
+             debug=args['debug'])
     t.runTest()
