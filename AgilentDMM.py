@@ -66,13 +66,13 @@ class AgilentDMM():
             # raise NameError('COULD NOT OPEN SERIAL PORT!')
 
         if (self.isConnected):
-            print('Resetting the meter')
-            retVal = self.sendCmd("*RST")
-            if len(retVal) > 0: print('Received:', retVal)
+            # print('Resetting the meter')
+            # retVal = self.sendCmd("*RST")
+            # if len(retVal) > 0: print('Received:', retVal)
 
-            print('Clearing the meter error queue')
-            retVal = self.sendCmd("*CLS")
-            if len(retVal) > 0: print('Received:', retVal)
+            # print('Clearing the meter error queue')
+            # retVal = self.sendCmd("*CLS")
+            # if len(retVal) > 0: print('Received:', retVal)
 
             print('Putting meter into Remote mode')
             retVal = self.sendCmd("SYST:REM\n")
@@ -100,7 +100,7 @@ class AgilentDMM():
     def readVolts(self):
         """ Read a single value from DVM and return it as a floating
         point value"""
-        if (self.ser2 is not None):
+        if (self.isConnected):
             self.sendCmdNoWait("MEAS:%s\n" % self.rangeStr)
             retVal = self.ser2.readline()
             temp_str = self.toStr(retVal)
@@ -126,8 +126,8 @@ class AgilentDMM():
         and return as a floating point array
         """
         results = []
+        tStart = time.time()
         if (self.isConnected):
-            tStart = time.time()
             retVal = self.sendCmdNoWait("CONF:%s\n" % self.rangeStr)
             retVal = self.sendCmdNoWait("SAMPLE:COUNT %s\n" % nSamp)
             retVal = self.sendCmdNoWait("READ?\n")
@@ -153,9 +153,26 @@ class AgilentDMM():
                 results.append(result)
         else:
             results.append(self.ERRVAL)
+        tEnd = time.time()
         if (self.debug): print("Returning: ",results)
         return(results, (tEnd-tStart))
 
+    def close(self):
+        """ read any remaining data from the serial port and close it.
+        """
+        print("AgilentDMM.close()")
+        if (self.isConnected):
+            retVal = self.toStr(self.ser2.read(1))
+            while(retVal != ''):
+                print(retVal)
+                retVal = self.toStr(self.ser2.read(1))
+            self.ser2.close()
+            self.ser2 = None
+            self.isConnected = False
+        else:
+            print("already disconnected - doing nothing")
+        print("AgilendDMM Connection Closed")
+    
     def toStr(self, inStr):
         """ convert a string-like variable inStr into a simple
         ascii encoded string.
@@ -200,57 +217,63 @@ class AgilentDMM():
 if __name__ == '__main__':
     print("AgilentDMM main()")
 
-    dvm1 = AgilentDMM('/dev/ttyUSB0', debug=True)
 
-    vArr, tsamp = dvm1.readVoltsMultiple()
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+    try:
+        dvm1 = AgilentDMM('/dev/ttyUSB0', debug=True)
 
-    v = dvm1.readVolts()
-    print(v)
+        vArr, tsamp = dvm1.readVoltsMultiple()
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
 
-    n=1
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=2
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=3
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=5
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=10
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=20
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=5
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
-    n=2
-    vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
-    print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
-    if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
-                               (n, len(vArr)))
+        v = dvm1.readVolts()
+        print(v)
 
+        n=1
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=2
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=3
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=5
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=10
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=20
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=5
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+        n=2
+        vArr, tsamp = dvm1.readVoltsMultiple(nSamp=n)
+        print("Read %d samples in %.2f seconds" % (len(vArr), tsamp), vArr)
+        if (len(vArr) != n): print("ERROR:  Asked for %d samples, got %d" %
+                                   (n, len(vArr)))
+    finally:
+        print("#########################")
+        print("finally block")
+        sys.stdout.flush()
+        dvm1.close()
 
-
+    print("Done!")
     
 
 

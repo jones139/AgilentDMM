@@ -70,26 +70,33 @@ class Test:
         fp.write(s)
         fp.close()
 
-        print("Initialising DVM1")
-        dvm1 = AgilentDMM.AgilentDMM(self.DVM1_PORT,
-                                     debug=self.debug)
+        try:
+            print("Initialising DVM1")
+            dvm1 = AgilentDMM.AgilentDMM(self.DVM1_PORT,
+                                         debug=self.debug)
 
-        # Collect Samples
-        print(
-            "Collecting %d records of Sample "
-            "Data"
-            % (self.nRec))
-        for nrec in range(0, self.nRec):
-            time_now = time.time()
-            v1, t = dvm1.readVoltsMultiple(self.nSamp)
-            v1 = np.asarray(v1)
-            m = v1.mean()
-            s = v1.std()
-            sys.stdout.write("%f (%f) " % (v1.mean(), t))
+            # Collect Samples
+            print(
+                "Collecting %d records of Sample "
+                "Data"
+                % (self.nRec))
+            for nrec in range(0, self.nRec):
+                time_now = time.time()
+                v1, t = dvm1.readVoltsMultiple(self.nSamp)
+                v1 = np.asarray(v1)
+                m = v1.mean()
+                s = v1.std()
+                sys.stdout.write("%f (%f) " % (v1.mean(), t))
+                sys.stdout.flush()
+                self.writeDataToFile(
+                    self.fname, time_now, m, s)
+            sys.stdout.write("\n")
+        finally:
+            print("#################")
+            print("# finally block #")
+            print("#################")
             sys.stdout.flush()
-            self.writeDataToFile(
-                self.fname, time_now, m, s)
-        sys.stdout.write("\n")
+            dvm1.close()
 
         print("*****************************")
         print("*     FINISHED!!!!          *")
