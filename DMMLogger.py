@@ -24,6 +24,7 @@
 import sys
 import numpy as np
 import time
+import datetime
 import os
 import argparse
 
@@ -113,7 +114,7 @@ if __name__ == "__main__":
                         help='Number of samples to average for each record')
     parser.add_argument('-f', '--fname',  dest='fname',
                         default='DMMLogger.csv',
-                        help='Output Filename')
+                        help='Output Filename root')
     parser.add_argument('--debug', '-d', default=False,
                         action='store_true', dest='debug',
                         help='Number of records to record')
@@ -121,7 +122,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
     print(args)
-    t = Test(args['fname'],
+
+    tStr = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    fname = "%s-%s.csv" % (args['fname'],tStr)
+    t = Test(fname,
              nRec = args['nRec'],
              nSamp = args['nSamp'],
              debug=args['debug'])
