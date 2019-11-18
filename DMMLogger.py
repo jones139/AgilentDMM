@@ -29,10 +29,12 @@ import os
 import argparse
 
 import AgilentDMM
+import LakeshoreTempLog
 
 class Test:
     # Defines the COM ports to which the Agilent 34401 DVMS are connected.
     DVM1_PORT = "/dev/ttyUSB0"
+    TEMPLOG_PORT = "/dev/ttyUSB1"
 
     def __init__(self,
                  fname="test.csv",
@@ -47,7 +49,7 @@ class Test:
 
 
     def writeDataToFile(self, fname, time_now, 
-                        v1m, v1s):
+                        v1m, v1s, tempsArr):
         """ Writes a set of readings v to the output file.
         """
         tn = time.localtime(time_now)
@@ -57,6 +59,8 @@ class Test:
         fp = open(fname, 'a')
         fp.write(timeStr + ", ")
         fp.write('%.1f, %f, %f ' % (time_now, v1m, v1s))
+        for t in tempsArr:
+            fp.write(', %f' % t)
         fp.write("\n")
         fp.close()
 
@@ -76,6 +80,8 @@ class Test:
             dvm1 = AgilentDMM.AgilentDMM(self.DVM1_PORT,
                                          debug=self.debug)
 
+
+            tempLog = LakeshoreTempLog.LakeshoreTempLog(self.TEMPLOG_PORT)
             # Collect Samples
             print(
                 "Collecting %d records of Sample "
@@ -89,8 +95,9 @@ class Test:
                 s = v1.std()
                 sys.stdout.write("%f (%f) " % (v1.mean(), t))
                 sys.stdout.flush()
+                tempsArr = tempLog.readTempAll()
                 self.writeDataToFile(
-                    self.fname, time_now, m, s)
+                    self.fname, time_now, m, s, tempsArr)
             sys.stdout.write("\n")
         finally:
             print("#################")
@@ -98,6 +105,7 @@ class Test:
             print("#################")
             sys.stdout.flush()
             dvm1.close()
+            tempLog.close()
 
         print("*****************************")
         print("*     FINISHED!!!!          *")
